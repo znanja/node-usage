@@ -89,7 +89,7 @@ void AsyncAfterGetUsage(uv_work_t* req) {
         Local<Value> argv[argc] = {
             Exception::Error(String::New("INVALID_PID"))
         };
-        usageData->callback->Call(Context::GetCurrent()->Global(), argc, argv);
+        usageData->callback->Call(argc, argv);
     } else {
         Local<Object> usage = Object::New();
         usage->Set(String::NewSymbol("cpu"), Number::New(usageData->ps_usage.cpu));
@@ -97,23 +97,24 @@ void AsyncAfterGetUsage(uv_work_t* req) {
 
         const unsigned argc = 2;
         Local<Value> argv[argc] = { Local<Value>::New(Null()), usage };
-        usageData->callback->Call(Context::GetCurrent()->Global(), argc, argv);
+        usageData->callback->Call(argc, argv);
     }
 
     delete usageData;
     delete req;
 }
 
-Handle<Value> GetUsage(const Arguments& args) {
+NAN_METHOD(GetUsage) {
     
-    HandleScope scope;
+    NanScope();
 
     int pid = (int)(Local<Number>::Cast(args[0])->Value());
+    
     Local<Function> callback = Local<Function>::Cast(args[1]);
 
     UsageData* usageData = new UsageData();
     usageData->pid = pid;
-    usageData->callback = Persistent<Function>::New(callback);
+    usageData->callback = new NanCallback(callback);
     usageData->failed = false;
 
     uv_work_t* req = new uv_work_t();
@@ -121,5 +122,5 @@ Handle<Value> GetUsage(const Arguments& args) {
 
     uv_queue_work(uv_default_loop(), req, AsyncGetUsage, (uv_after_work_cb)AsyncAfterGetUsage);
     
-    return scope.Close(Undefined());
+    NanReturnUndefined();
 }

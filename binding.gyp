@@ -4,6 +4,9 @@
 			'target_name': 'sysinfo',
 			'conditions': [
 				['OS=="solaris"', {
+					'include_dirs': [
+						'<!(node -e "require(\'nan\')")'
+					],
 					'sources': [
 						'src/solaris.cpp'
 					]
